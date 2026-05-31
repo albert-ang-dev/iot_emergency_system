@@ -1,3 +1,8 @@
+'''
+    AI GENERATE API CODE FOR BLUETOOTH UART SERVICE
+'''
+
+
 import bluetooth
 import time
 

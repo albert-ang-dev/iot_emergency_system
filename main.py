@@ -24,7 +24,7 @@ last_connected_state = False
 def on_data_received(incoming_string):
     global appResponded
     
-    if incoming_string.lower() == "sent":
+    if incoming_string.lower() == "":
         appResponded = True
 
 ble_device = ESP32BLE(name="ESP32_Serial")
@@ -55,7 +55,7 @@ while True:
         if button.value() == 0:
             lcd.clear()
             lcd.putstr("SENDING SOS")
-            ble_device.send("Hi there from ESP32!")
+            ble_device.send("HELP")
             time.sleep(3)
             lcd.clear()
             lcd.putstr("CONNECTED SUCCESS!")

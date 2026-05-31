@@ -1,3 +1,7 @@
+'''
+    AI GENERATE API CODE FOR LCD DISPLAY
+'''
+
 import time
 from machine import I2C
 from lcd_api import LcdApi
