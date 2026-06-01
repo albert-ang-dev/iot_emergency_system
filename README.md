@@ -1,34 +1,47 @@
 # IoT Emergency Alert System (ESP32 & MicroPython)
 
-An automated emergency distress system that leverages an ESP32 microcontroller and a companion mobile application to instantly broadcast SOS alerts, GPS locations, and timestamps to pre-configured emergency contacts over SMS.
+An event-driven IoT distress system featuring an ESP32 microcontroller that pairs with a mobile application to instantly transmit emergency alerts upon a physical button press.
 
 ---
 
 ## 📄 Project Overview
 
-The **IoT Emergency Alert System** is a low-latency, hardware-to-mobile safety solution designed for vulnerable individuals, outdoor adventurers, or industrial workers. Built on the **ESP32** platform using **MicroPython**, this device serves as a physical panic button. 
+The **IoT Emergency Alert System** is a low-latency, hardware-to-mobile communication solution built on the **ESP32** platform using **MicroPython**. Designed with a strict Finite State Machine (FSM), the device enforces a secure initialization workflow before enabling safety utility. 
 
-When the physical trigger on the ESP32 is activated, it instantly broadcasts an encrypted or structured `"help"` distress payload via **Bluetooth Low Energy (BLE)** to a paired mobile application. Upon receiving this signal, the background service of the mobile application fetches the smartphone's real-time **GPS coordinates** and local **timestamp**, automatically dispatching an SMS distress message to a list of designated emergency contacts without requiring the user to open or unlock their phone.
+### System Workflow
+1. **Power-On & Pairing State:** Upon boot, the ESP32 blocks primary utility and prompts the user via an LED display to connect a mobile device.
+2. **Ready State:** Once a successful **Bluetooth Low Energy (BLE)** handshake is confirmed with the mobile application, the device transitions to an active monitoring state.
+3. **Alert State:** When the physical tactile button is pressed, the ESP32 instantly transmits a `"help"` payload to the paired mobile app while dynamically updating the LED display to show `"MESSAGING CONTACTS"`.
 
 ---
 
 ## 🛠️ Hardware Requirements
 
-To replicate or build this project, you will need the following hardware components:
-
-* **ESP32 Development Board:** (e.g., ESP32-WROOM-32 NodeMCU) Chosen for its integrated dual-mode Bluetooth (Classic and BLE) and low power consumption states.
-* **LED Display:** To display "MESSAGING CONTACTS" when user pressed the button
-* **Physical Tactile Button / Push Button:** Acts as the hardware interrupt trigger for the emergency broadcast.
-* **Breadboard & Jumper Wires:** For prototyping and establishing connections between the button and the microcontroller.
-* **Micro-USB Cable:** For flashing the MicroPython firmware and uploading scripts to the ESP32.
+* **ESP32 Development Board:** (e.g., ESP32-WROOM-32) Utilized for its integrated BLE stack and low-power capabilities.
+* **LED Display:** (e.g., I2C OLED or LCD screen) Used to guide the user through the pairing sequence and display `"MESSAGING CONTACTS"` during alert execution.
+* **Physical Tactile Button:** Configured as an asynchronous hardware interrupt trigger for the emergency transmission.
+* **Breadboard & Jumper Wires:** For prototyping connections between peripherals and GPIO pins.
+* **Micro-USB Cable:** For flashing MicroPython firmware and script deployment.
 
 ---
 
 ## 📚 Libraries & Frameworks
 
-The system relies on the following core libraries and software modules:
-
 ### MicroPython (Firmware Side)
-* **`ubluetooth` / `bluetooth`:** Built-in MicroPython module used to interact with the ESP32's onboard BLE controller, handle advertising payloads, and manage the GATT server profiles.
-* **`machine`:** Standard MicroPython module used to control hardware peripherals, configure GPIO pins for the tactile button, and handle hardware-level interrupts (`IRQ_RISING`).
-* **`utime`:** Provides time-keeping and delay functions necessary for debouncing the physical switch and managing BLE advertising intervals.
+* **`ubluetooth`:** Built-in module used to configure the ESP32's onboard BLE controller, handle advertising payloads, and manage the GATT server profiles for mobile app pairing.
+* **`machine`:** Used to control hardware peripherals, handle communication for the LED display, and manage hardware-level interrupts (`IRQ_RISING`) for the button.
+* **`utime`:** Provides time-keeping functions required for software switch debouncing and BLE transmission intervals.
+
+---
+
+## ⚙️ Architecture & Implementation Details
+
+### 1. Finite State Machine (FSM)
+The firmware is structured around a strict state machine to guarantee predictable behavior and prevent false triggers before a connection is secured:
+* **`STATE_INIT`**: Configures GPIOs, registers interrupts, and initializes the LED screen.
+* **`STATE_PAIRING`**: Displays a prompt on the screen requiring a connection. The ESP32 enters BLE advertising mode.
+* **`STATE_READY`**: Triggered via a BLE connection callback. The device activates the main control loop.
+* **`STATE_ALERT`**: Triggered via a hardware interrupt. It immediately transmits the `"help"` string and updates the display.
+
+### 2. Low-Latency Edge Triggering
+To ensure maximum responsiveness during an emergency, the physical button does not rely on a standard polling loop. Instead, it utilizes a hardware-level **Interrupt Service Routine (ISR)** coupled with digital software debouncing to eliminate mechanical noise and transmit the alert payload instantly.
